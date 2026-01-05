@@ -72,21 +72,24 @@ export default function Calendar({ year }: CalendarProps) {
   };
 
   const getMonthDays = useMemo(() => {
-    const monthDaysMap: { [key: number]: { day: number; date: Date; isCurrentMonth: boolean }[] } = {};
+    const monthDaysMap: { [key: number]: { day: number; date: Date; isCurrentMonth: boolean; isEmpty: boolean }[] } = {};
+    // Maximum columns per month: 6 leading days (if month starts on Saturday) + 31 days = 37
+    const MAX_COLUMNS_PER_MONTH = 37;
     
     for (let month = 0; month < 12; month++) {
-      const monthDays: { day: number; date: Date; isCurrentMonth: boolean }[] = [];
+      const monthDays: { day: number; date: Date; isCurrentMonth: boolean; isEmpty: boolean }[] = [];
       const firstDay = getFirstDayOfMonth(year, month);
       const daysInMonth = getDaysInMonth(year, month);
       const lastDayPrevMonth = getLastDayOfPreviousMonth(year, month);
 
-      // Add trailing days from previous month
+      // Add leading days from previous month to align with weekday headers
       for (let i = firstDay - 1; i >= 0; i--) {
         const day = lastDayPrevMonth - i;
         monthDays.push({
           day,
           date: new Date(year, month - 1, day),
           isCurrentMonth: false,
+          isEmpty: false,
         });
       }
 
@@ -96,10 +99,21 @@ export default function Calendar({ year }: CalendarProps) {
           day,
           date: new Date(year, month, day),
           isCurrentMonth: true,
+          isEmpty: false,
         });
       }
 
-      // Don't add days from next month - each month row ends on its last day
+      // Add empty cells after the last day of the month to fill remaining columns
+      const currentColumns = monthDays.length;
+      const emptyCellsNeeded = MAX_COLUMNS_PER_MONTH - currentColumns;
+      for (let i = 0; i < emptyCellsNeeded; i++) {
+        monthDays.push({
+          day: 0,
+          date: new Date(year, month, daysInMonth + i + 1),
+          isCurrentMonth: false,
+          isEmpty: true,
+        });
+      }
 
       monthDaysMap[month] = monthDays;
     }
@@ -108,9 +122,10 @@ export default function Calendar({ year }: CalendarProps) {
   }, [year]);
 
   // Calculate total columns and generate repeating weekly pattern for headers
+  // Each month has a fixed width of 37 columns (MAX_COLUMNS_PER_MONTH)
   const weekdayHeaders = useMemo(() => {
-    const monthDaysArray = Object.values(getMonthDays) as { day: number; date: Date; isCurrentMonth: boolean }[][];
-    const totalColumns = monthDaysArray.reduce((sum: number, days: { day: number; date: Date; isCurrentMonth: boolean }[]) => sum + days.length, 0);
+    const MAX_COLUMNS_PER_MONTH = 37;
+    const totalColumns = MAX_COLUMNS_PER_MONTH * 12; // 12 months * 37 columns each
     const headers: { dayOfWeek: number; label: string; isSunday: boolean; isSaturday: boolean }[] = [];
     
     for (let i = 0; i < totalColumns; i++) {
@@ -124,7 +139,7 @@ export default function Calendar({ year }: CalendarProps) {
     }
     
     return headers;
-  }, [getMonthDays]);
+  }, []);
 
   const getEventsForDate = (date: Date) => {
     return events.filter(event => {
@@ -175,7 +190,7 @@ export default function Calendar({ year }: CalendarProps) {
     handleModalClose();
   };
 
-  const getEventPosition = (event: Event, monthDays: { day: number; date: Date; isCurrentMonth: boolean }[]) => {
+  const getEventPosition = (event: Event, monthDays: { day: number; date: Date; isCurrentMonth: boolean; isEmpty: boolean }[]) => {
     const start = new Date(event.startDate);
     const end = new Date(event.endDate);
     
@@ -184,6 +199,9 @@ export default function Calendar({ year }: CalendarProps) {
     let span = 0;
 
     monthDays.forEach((day, index) => {
+      // Skip empty cells when calculating event positions
+      if (day.isEmpty) return;
+      
       const dayDate = new Date(day.date);
       dayDate.setHours(0, 0, 0, 0);
       const eventStart = new Date(start);
@@ -259,6 +277,16 @@ export default function Calendar({ year }: CalendarProps) {
                 {/* Days Row */}
                 <div className="flex relative">
                   {monthDays.map((day, dayIndex) => {
+                    // Skip rendering events and interactions for empty cells
+                    if (day.isEmpty) {
+                      return (
+                        <div
+                          key={dayIndex}
+                          className="w-8 flex-shrink-0 h-16 border-r border-gray-200 bg-gray-50"
+                        />
+                      );
+                    }
+
                     const dayOfWeek = day.date.getDay();
                     const isSunday = dayOfWeek === 0;
                     const isSaturday = dayOfWeek === 6;
