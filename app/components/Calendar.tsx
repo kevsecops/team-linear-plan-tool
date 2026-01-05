@@ -107,6 +107,25 @@ export default function Calendar({ year }: CalendarProps) {
     return monthDaysMap;
   }, [year]);
 
+  // Calculate total columns and generate repeating weekly pattern for headers
+  const weekdayHeaders = useMemo(() => {
+    const monthDaysArray = Object.values(getMonthDays) as { day: number; date: Date; isCurrentMonth: boolean }[][];
+    const totalColumns = monthDaysArray.reduce((sum: number, days: { day: number; date: Date; isCurrentMonth: boolean }[]) => sum + days.length, 0);
+    const headers: { dayOfWeek: number; label: string; isSunday: boolean; isSaturday: boolean }[] = [];
+    
+    for (let i = 0; i < totalColumns; i++) {
+      const dayOfWeek = i % 7;
+      headers.push({
+        dayOfWeek,
+        label: DAYS[dayOfWeek],
+        isSunday: dayOfWeek === 0,
+        isSaturday: dayOfWeek === 6,
+      });
+    }
+    
+    return headers;
+  }, [getMonthDays]);
+
   const getEventsForDate = (date: Date) => {
     return events.filter(event => {
       const start = new Date(event.startDate);
@@ -200,25 +219,16 @@ export default function Calendar({ year }: CalendarProps) {
         <div className="flex mb-2">
           <div className="w-32 flex-shrink-0"></div> {/* Month column spacer */}
           <div className="flex">
-            {MONTHS.map((_, monthIndex) => {
-              const monthDays = getMonthDays[monthIndex] || [];
-              return monthDays.map((day, dayIndex) => {
-                const dayOfWeek = day.date.getDay();
-                const isSunday = dayOfWeek === 0;
-                const isSaturday = dayOfWeek === 6;
-                
-                return (
-                  <div
-                    key={`${monthIndex}-${dayIndex}`}
-                    className={`w-8 flex-shrink-0 text-center text-xs font-semibold ${
-                      isSunday ? 'text-red-600' : isSaturday ? 'text-red-600' : 'text-black'
-                    }`}
-                  >
-                    {DAYS[dayOfWeek]}
-                  </div>
-                );
-              });
-            })}
+            {weekdayHeaders.map((header, index) => (
+              <div
+                key={index}
+                className={`w-8 flex-shrink-0 text-center text-xs font-semibold ${
+                  header.isSunday ? 'text-red-600' : header.isSaturday ? 'text-red-600' : 'text-black'
+                }`}
+              >
+                {header.label}
+              </div>
+            ))}
           </div>
         </div>
 
