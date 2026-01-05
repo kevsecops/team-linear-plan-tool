@@ -8,7 +8,7 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-white p-8">
-      <div className="max-w-full mx-auto">
+      <div className="w-full mx-auto overflow-x-auto">
         <div className="mb-4 flex items-center gap-4">
           <label className="text-sm font-medium">Year:</label>
           <input

@@ -188,8 +188,8 @@ export default function Calendar({ year }: CalendarProps) {
   };
 
   return (
-    <div className="w-full overflow-x-auto">
-      <div className="inline-block">
+    <div className="w-full">
+      <div className="inline-block min-w-0">
         {/* Year Header */}
         <div className="mb-4">
           <h1 className="text-4xl font-bold mb-2">CALENDAR</h1>
