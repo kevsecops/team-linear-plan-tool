@@ -189,7 +189,7 @@ export default function Calendar({ year }: CalendarProps) {
 
   return (
     <div className="w-full overflow-x-auto">
-      <div className="min-w-max">
+      <div className="inline-block">
         {/* Year Header */}
         <div className="mb-4">
           <h1 className="text-4xl font-bold mb-2">CALENDAR</h1>
@@ -198,7 +198,7 @@ export default function Calendar({ year }: CalendarProps) {
 
         {/* Weekday Headers */}
         <div className="flex mb-2">
-          <div className="w-32"></div> {/* Month column spacer */}
+          <div className="w-32 flex-shrink-0"></div> {/* Month column spacer */}
           <div className="flex">
             {MONTHS.map((_, monthIndex) => {
               const monthDays = getMonthDays[monthIndex] || [];
@@ -210,7 +210,7 @@ export default function Calendar({ year }: CalendarProps) {
                 return (
                   <div
                     key={`${monthIndex}-${dayIndex}`}
-                    className={`w-8 text-center text-xs font-semibold ${
+                    className={`w-8 flex-shrink-0 text-center text-xs font-semibold ${
                       isSunday ? 'text-red-600' : isSaturday ? 'text-red-600' : 'text-black'
                     }`}
                   >
@@ -247,7 +247,7 @@ export default function Calendar({ year }: CalendarProps) {
                 </div>
 
                 {/* Days Row */}
-                <div className="flex relative flex-1">
+                <div className="flex relative">
                   {monthDays.map((day, dayIndex) => {
                     const dayOfWeek = day.date.getDay();
                     const isSunday = dayOfWeek === 0;
@@ -259,7 +259,7 @@ export default function Calendar({ year }: CalendarProps) {
                     return (
                       <div
                         key={dayIndex}
-                        className={`w-8 h-16 border-r border-gray-200 flex flex-col items-center justify-start p-1 cursor-pointer hover:bg-blue-50 ${
+                        className={`w-8 flex-shrink-0 h-16 border-r border-gray-200 flex flex-col items-center justify-start p-1 cursor-pointer hover:bg-blue-50 ${
                           isSelected ? 'bg-blue-100' : ''
                         } ${!day.isCurrentMonth ? 'text-gray-400' : ''} ${
                           isSunday || isSaturday ? 'bg-red-50' : ''
