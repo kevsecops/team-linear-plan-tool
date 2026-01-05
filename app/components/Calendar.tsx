@@ -99,16 +99,7 @@ export default function Calendar({ year }: CalendarProps) {
         });
       }
 
-      // Add leading days from next month to complete the week
-      const lastDay = new Date(year, month, daysInMonth).getDay();
-      const daysToAdd = 6 - lastDay;
-      for (let day = 1; day <= daysToAdd; day++) {
-        monthDays.push({
-          day,
-          date: new Date(year, month + 1, day),
-          isCurrentMonth: false,
-        });
-      }
+      // Don't add days from next month - each month row ends on its last day
 
       monthDaysMap[month] = monthDays;
     }
