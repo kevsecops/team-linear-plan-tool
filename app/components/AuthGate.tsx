@@ -20,23 +20,36 @@ export default function AuthGate({ children }: AuthGateProps) {
     const authCookie = cookies.find(c => c.trim().startsWith('pb_auth='));
     if (authCookie) {
       const token = authCookie.split('=')[1];
-      if (token) {
-        pb.authStore.save(token, pb.authStore.model);
+      if (token && token !== 'null' && token !== 'undefined') {
+        pb.authStore.save(token, null);
       }
     }
 
-    if (!isAuthenticated()) {
-      router.push('/login');
-    } else {
-      setIsChecking(false);
-    }
+    // Check if authenticated
+    const checkAuth = async () => {
+      try {
+        // If we have a token, try to verify it's valid
+        if (pb.authStore.token && pb.authStore.isValid) {
+          setIsChecking(false);
+          return;
+        }
+        
+        // If not valid, redirect to login
+        router.push('/login');
+      } catch (err) {
+        console.error('Auth check error:', err);
+        router.push('/login');
+      }
+    };
+
+    checkAuth();
 
     // Listen for auth changes
     const unsubscribe = pb.authStore.onChange(() => {
-      if (!pb.authStore.isValid) {
-        router.push('/login');
-      } else {
+      if (pb.authStore.isValid) {
         setIsChecking(false);
+      } else {
+        router.push('/login');
       }
     });
 

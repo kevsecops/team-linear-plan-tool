@@ -23,17 +23,31 @@ export default function LoginPage() {
 
       if (isLogin) {
         // Login
-        await pb.collection('users').authWithPassword(email, password);
+        const authData = await pb.collection('users').authWithPassword(email, password);
+        console.log('Login successful:', authData);
       } else {
         // Register
-        const userData = {
+        const userData: any = {
           email,
           password,
           passwordConfirm: password,
-          name: name || email.split('@')[0],
         };
+        
+        // Add name if provided
+        if (name) {
+          userData.name = name;
+        }
+        
+        // Create user
         await pb.collection('users').create(userData);
+        
+        // Auto-login after registration
         await pb.collection('users').authWithPassword(email, password);
+      }
+
+      // Verify auth token exists
+      if (!pb.authStore.token) {
+        throw new Error('Authentication token not received');
       }
 
       // Save auth token to cookie
@@ -41,10 +55,30 @@ export default function LoginPage() {
       const secureFlag = isProduction ? '; Secure' : '';
       document.cookie = `pb_auth=${pb.authStore.token}; path=/; max-age=604800${secureFlag}; SameSite=Lax`; // 7 days
 
+      // Small delay to ensure cookie is set
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       router.push('/');
       router.refresh();
     } catch (err: any) {
-      setError(err.message || 'Authentication failed');
+      console.error('Auth error:', err);
+      // Extract more detailed error message from PocketBase
+      let errorMessage = 'Authentication failed';
+      if (err?.response?.data) {
+        const data = err.response.data;
+        if (data.message) {
+          errorMessage = data.message;
+        } else if (data.email) {
+          errorMessage = `Email: ${data.email.message || data.email}`;
+        } else if (data.password) {
+          errorMessage = `Password: ${data.password.message || data.password}`;
+        } else if (typeof data === 'object') {
+          errorMessage = JSON.stringify(data);
+        }
+      } else if (err?.message) {
+        errorMessage = err.message;
+      }
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
