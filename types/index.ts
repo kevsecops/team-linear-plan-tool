@@ -1,8 +1,12 @@
+// PocketBase User (from PocketBase collection)
 export interface User {
   id: string;
-  name: string;
-  createdAt: string;
-  updatedAt: string;
+  email: string;
+  name?: string;
+  username?: string;
+  avatar?: string;
+  created: string;
+  updated: string;
 }
 
 export interface EventType {
@@ -18,11 +22,12 @@ export interface Event {
   title: string;
   startDate: string;
   endDate: string;
-  userId: string;
+  userId: string; // PocketBase user ID
   eventTypeId: string;
-  user: User;
   eventType: EventType;
   createdAt: string;
   updatedAt: string;
+  // User details will be fetched from PocketBase when needed
+  user?: User;
 }
 

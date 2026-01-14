@@ -10,14 +10,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id        String   @id @default(cuid())
-  name      String
-  events    Event[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
 model EventType {
   id           String   @id @default(cuid())
   name         String   @unique
@@ -32,9 +24,8 @@ model Event {
   title       String
   startDate   DateTime  @db.Date
   endDate     DateTime  @db.Date
-  userId      String
+  userId      String    // PocketBase user ID (no relation)
   eventTypeId String
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   eventType   EventType @relation(fields: [eventTypeId], references: [id], onDelete: Cascade)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt

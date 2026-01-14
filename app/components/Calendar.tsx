@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { Event, User, EventType } from '@/types';
+import { getPocketBase } from '@/lib/pocketbase';
 import EventModal from './EventModal';
 
 interface CalendarProps {
@@ -33,8 +34,43 @@ export default function Calendar({ year }: CalendarProps) {
   const fetchEvents = async () => {
     try {
       const response = await fetch('/api/events');
-      const data = await response.json();
-      setEvents(data);
+      const eventsData = await response.json();
+      
+      // Fetch user details from PocketBase for each event
+      const pb = getPocketBase();
+      const eventsWithUsers = await Promise.all(
+        eventsData.map(async (event: Event) => {
+          try {
+            const user = await pb.collection('users').getOne(event.userId);
+            return {
+              ...event,
+              user: {
+                id: user.id,
+                email: user.email,
+                name: user.name || user.username || user.email.split('@')[0],
+                username: user.username,
+                avatar: user.avatar,
+                created: user.created,
+                updated: user.updated,
+              },
+            };
+          } catch (err) {
+            // If user not found, use placeholder
+            return {
+              ...event,
+              user: {
+                id: event.userId,
+                email: 'unknown@example.com',
+                name: 'Unknown User',
+                created: '',
+                updated: '',
+              },
+            };
+          }
+        })
+      );
+      
+      setEvents(eventsWithUsers);
     } catch (error) {
       console.error('Error fetching events:', error);
     }
@@ -42,7 +78,14 @@ export default function Calendar({ year }: CalendarProps) {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch('/api/users');
+      const pb = getPocketBase();
+      const token = pb.authStore.token;
+      
+      const response = await fetch('/api/users', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
       const data = await response.json();
       setUsers(data);
     } catch (error) {
@@ -159,6 +202,7 @@ export default function Calendar({ year }: CalendarProps) {
         setSelectedRange({ start, end });
         setIsModalOpen(true);
         setIsSelecting(false);
+        handleModalOpen(); // Refetch event types when modal opens
       }
     }
   };
@@ -179,7 +223,12 @@ export default function Calendar({ year }: CalendarProps) {
 
   const handleEventCreated = () => {
     fetchEvents();
+    fetchEventTypes(); // Refetch event types in case new ones were created
     handleModalClose();
+  };
+
+  const handleModalOpen = () => {
+    fetchEventTypes(); // Refetch event types when modal opens
   };
 
   const getEventPosition = (event: Event, monthDays: { day: number; date: Date; isCurrentMonth: boolean; isEmpty: boolean }[]) => {

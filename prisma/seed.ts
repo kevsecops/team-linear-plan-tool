@@ -3,33 +3,8 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
-  // Create users
-  const user1 = await prisma.user.upsert({
-    where: { id: 'user1' },
-    update: {},
-    create: {
-      id: 'user1',
-      name: 'Alice Johnson',
-    },
-  });
-
-  const user2 = await prisma.user.upsert({
-    where: { id: 'user2' },
-    update: {},
-    create: {
-      id: 'user2',
-      name: 'Bob Smith',
-    },
-  });
-
-  const user3 = await prisma.user.upsert({
-    where: { id: 'user3' },
-    update: {},
-    create: {
-      id: 'user3',
-      name: 'Carol Williams',
-    },
-  });
+  // Note: Users are now managed by PocketBase, not Prisma
+  // Users will be created through PocketBase authentication
 
   // Create event types
   const ptoType = await prisma.eventType.upsert({

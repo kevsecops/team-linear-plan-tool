@@ -5,7 +5,6 @@ export async function GET() {
   try {
     const events = await prisma.event.findMany({
       include: {
-        user: true,
         eventType: true,
       },
       orderBy: {
@@ -44,7 +43,6 @@ export async function POST(request: NextRequest) {
         eventTypeId,
       },
       include: {
-        user: true,
         eventType: true,
       },
     });

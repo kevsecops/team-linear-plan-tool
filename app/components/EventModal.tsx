@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { User, EventType } from '@/types';
+import { getPocketBase } from '@/lib/pocketbase';
 
 interface EventModalProps {
   isOpen: boolean;
@@ -26,6 +27,25 @@ export default function EventModal({
   const [selectedUserId, setSelectedUserId] = useState('');
   const [selectedEventTypeId, setSelectedEventTypeId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const pb = getPocketBase();
+  const currentUser = pb.authStore.model;
+
+  // Set default user to current logged-in user and refetch event types when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      if (currentUser && !selectedUserId) {
+        setSelectedUserId(currentUser.id);
+      }
+      // Refetch event types to get any newly created ones
+      fetch('/api/event-types')
+        .then(res => res.json())
+        .then(data => {
+          // Update parent's eventTypes via a callback if needed
+          // For now, we rely on the parent to refetch
+        })
+        .catch(err => console.error('Error fetching event types:', err));
+    }
+  }, [isOpen, currentUser, selectedUserId]);
 
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('en-US', {
@@ -120,7 +140,7 @@ export default function EventModal({
               <option value="">Select a user</option>
               {users.map((user) => (
                 <option key={user.id} value={user.id}>
-                  {user.name}
+                  {user.name || user.email}
                 </option>
               ))}
             </select>
