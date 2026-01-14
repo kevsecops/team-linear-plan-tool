@@ -5,8 +5,8 @@ let pbInstance: PocketBase | null = null;
 
 export function getPocketBase(): PocketBase {
   if (typeof window === 'undefined') {
-    // Server-side: create a new instance (no authStore persistence needed)
-    const url = process.env.NEXT_PUBLIC_POCKETBASE_URL || 'http://localhost:8090';
+    // Server-side: use internal Docker URL for better performance
+    const url = process.env.POCKETBASE_INTERNAL_URL || process.env.NEXT_PUBLIC_POCKETBASE_URL || 'http://localhost:8090';
     const pb = new PocketBase(url);
     // Enable auto cancellation for server-side requests
     pb.autoCancellation(false);

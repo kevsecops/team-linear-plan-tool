@@ -1,20 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
 import { getPocketBase } from '@/lib/pocketbase';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const eventTypes = await prisma.eventType.findMany({
-      orderBy: {
-        name: 'asc',
-      },
+    const pb = getPocketBase();
+    
+    // Load auth from cookies (critical for server-side authentication)
+    const cookieHeader = request.headers.get('cookie');
+    if (cookieHeader) {
+      pb.authStore.loadFromCookie(cookieHeader);
+    }
+
+    // Fetch event types sorted by name
+    const eventTypes = await pb.collection('eventTypes').getFullList({
+      sort: 'name',
     });
 
     return NextResponse.json(eventTypes);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching event types:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch event types' },
+      { error: 'Failed to fetch event types', details: error.message },
       { status: 500 }
     );
   }
@@ -22,14 +28,15 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    // Check authentication
     const pb = getPocketBase();
-    const authHeader = request.headers.get('authorization');
-    if (authHeader) {
-      const token = authHeader.replace('Bearer ', '');
-      pb.authStore.save(token, pb.authStore.model);
+    
+    // Load auth from cookies (critical for server-side authentication)
+    const cookieHeader = request.headers.get('cookie');
+    if (cookieHeader) {
+      pb.authStore.loadFromCookie(cookieHeader);
     }
 
+    // Check authentication
     if (!pb.authStore.isValid) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -47,24 +54,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const eventType = await prisma.eventType.create({
-      data: {
-        name,
-        colorHexCode,
-      },
+    // Create event type
+    const eventType = await pb.collection('eventTypes').create({
+      name,
+      colorHexCode,
     });
 
     return NextResponse.json(eventType, { status: 201 });
   } catch (error: any) {
     console.error('Error creating event type:', error);
-    if (error.code === 'P2002') {
+    
+    // Handle unique constraint errors (PocketBase equivalent of Prisma P2002)
+    if (error.status === 400 && error.data?.name) {
       return NextResponse.json(
         { error: 'Event type with this name already exists' },
         { status: 409 }
       );
     }
+    
     return NextResponse.json(
-      { error: 'Failed to create event type' },
+      { error: 'Failed to create event type', details: error.message },
       { status: 500 }
     );
   }

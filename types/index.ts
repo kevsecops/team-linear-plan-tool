@@ -9,25 +9,31 @@ export interface User {
   updated: string;
 }
 
+// PocketBase EventType collection
 export interface EventType {
   id: string;
   name: string;
   colorHexCode: string;
-  createdAt: string;
-  updatedAt: string;
+  created: string;
+  updated: string;
 }
 
+// PocketBase Event collection (with expanded relations)
 export interface Event {
   id: string;
   title: string;
   startDate: string;
   endDate: string;
-  userId: string; // PocketBase user ID
-  eventTypeId: string;
-  eventType: EventType;
-  createdAt: string;
-  updatedAt: string;
-  // User details will be fetched from PocketBase when needed
-  user?: User;
+  userId: string; // PocketBase user ID (relation)
+  eventTypeId: string; // PocketBase eventType ID (relation)
+  eventType: EventType | null; // Expanded relation from PocketBase
+  user: User; // Expanded relation from PocketBase
+  created: string;
+  updated: string;
+  // PocketBase expand object (when relations are expanded)
+  expand?: {
+    userId?: User;
+    eventTypeId?: EventType;
+  };
 }
 

@@ -1,21 +1,4 @@
 services:
-  postgres:
-    image: postgres:16-alpine
-    container_name: team-calendar-db
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: team_calendar
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   pocketbase:
     image: ghcr.io/muchobien/pocketbase:latest
     container_name: team-calendar-pb
@@ -34,12 +17,10 @@ services:
     ports:
       - "3000:3000"
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/team_calendar
+      POCKETBASE_INTERNAL_URL: http://pocketbase:8090
       NEXT_PUBLIC_POCKETBASE_URL: http://localhost:8090
       NODE_ENV: development
     depends_on:
-      postgres:
-        condition: service_healthy
       pocketbase:
         condition: service_started
     volumes:
@@ -48,6 +29,5 @@ services:
       - /app/.next
 
 volumes:
-  postgres_data:
   pocketbase_data:
 

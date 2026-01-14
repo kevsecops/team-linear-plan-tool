@@ -1,22 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { getPocketBase } from '@/lib/pocketbase';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const events = await prisma.event.findMany({
-      include: {
-        eventType: true,
-      },
-      orderBy: {
-        startDate: 'asc',
-      },
+    const pb = getPocketBase();
+    
+    // Load auth from cookies (critical for server-side authentication)
+    const cookieHeader = request.headers.get('cookie');
+    if (cookieHeader) {
+      pb.authStore.loadFromCookie(cookieHeader);
+    }
+
+    // Fetch events with expanded relations (userId and eventTypeId)
+    const events = await pb.collection('events').getFullList({
+      expand: 'userId,eventTypeId',
+      sort: 'startDate',
     });
 
     return NextResponse.json(events);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching events:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch events' },
+      { error: 'Failed to fetch events', details: error.message },
       { status: 500 }
     );
   }
@@ -24,6 +29,22 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    const pb = getPocketBase();
+    
+    // Load auth from cookies (critical for server-side authentication)
+    const cookieHeader = request.headers.get('cookie');
+    if (cookieHeader) {
+      pb.authStore.loadFromCookie(cookieHeader);
+    }
+
+    // Check authentication
+    if (!pb.authStore.isValid) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
     const { title, startDate, endDate, userId, eventTypeId } = body;
 
@@ -34,26 +55,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const event = await prisma.event.create({
-      data: {
-        title,
-        startDate: new Date(startDate),
-        endDate: new Date(endDate),
-        userId,
-        eventTypeId,
-      },
-      include: {
-        eventType: true,
-      },
+    // Create event with expanded relations
+    const event = await pb.collection('events').create({
+      title,
+      startDate,
+      endDate,
+      userId,
+      eventTypeId,
+    }, {
+      expand: 'userId,eventTypeId',
     });
 
     return NextResponse.json(event, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating event:', error);
     return NextResponse.json(
-      { error: 'Failed to create event' },
+      { error: 'Failed to create event', details: error.message },
       { status: 500 }
     );
   }
 }
-

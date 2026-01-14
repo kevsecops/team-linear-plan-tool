@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { Event, User, EventType } from '@/types';
-import { getPocketBase } from '@/lib/pocketbase';
 import EventModal from './EventModal';
 
 interface CalendarProps {
@@ -36,41 +35,46 @@ export default function Calendar({ year }: CalendarProps) {
       const response = await fetch('/api/events');
       const eventsData = await response.json();
       
-      // Fetch user details from PocketBase for each event
-      const pb = getPocketBase();
-      const eventsWithUsers = await Promise.all(
-        eventsData.map(async (event: Event) => {
-          try {
-            const user = await pb.collection('users').getOne(event.userId);
-            return {
-              ...event,
-              user: {
-                id: user.id,
-                email: user.email,
-                name: user.name || user.username || user.email.split('@')[0],
-                username: user.username,
-                avatar: user.avatar,
-                created: user.created,
-                updated: user.updated,
-              },
-            };
-          } catch (err) {
-            // If user not found, use placeholder
-            return {
-              ...event,
-              user: {
-                id: event.userId,
-                email: 'unknown@example.com',
-                name: 'Unknown User',
-                created: '',
-                updated: '',
-              },
-            };
-          }
-        })
-      );
+      // Events from API already have expanded relations (userId and eventTypeId)
+      // Map PocketBase format to our Event type
+      const mappedEvents = eventsData.map((event: any) => {
+        // Extract expanded relations
+        const expandedUser = typeof event.expand?.userId === 'object' ? event.expand.userId : null;
+        const expandedEventType = typeof event.expand?.eventTypeId === 'object' ? event.expand.eventTypeId : null;
+        
+        return {
+          id: event.id,
+          title: event.title,
+          startDate: event.startDate,
+          endDate: event.endDate,
+          userId: event.userId,
+          eventTypeId: event.eventTypeId,
+          eventType: expandedEventType ? {
+            id: expandedEventType.id,
+            name: expandedEventType.name,
+            colorHexCode: expandedEventType.colorHexCode,
+            createdAt: expandedEventType.created,
+            updatedAt: expandedEventType.updated,
+          } : null,
+          user: expandedUser ? {
+            id: expandedUser.id,
+            email: expandedUser.email,
+            name: expandedUser.name || expandedUser.username || expandedUser.email?.split('@')[0] || 'Unknown',
+            createdAt: expandedUser.created,
+            updatedAt: expandedUser.updated,
+          } : {
+            id: event.userId,
+            email: 'unknown@example.com',
+            name: 'Unknown User',
+            createdAt: '',
+            updatedAt: '',
+          },
+          createdAt: event.created,
+          updatedAt: event.updated,
+        };
+      });
       
-      setEvents(eventsWithUsers);
+      setEvents(mappedEvents);
     } catch (error) {
       console.error('Error fetching events:', error);
     }
@@ -78,14 +82,7 @@ export default function Calendar({ year }: CalendarProps) {
 
   const fetchUsers = async () => {
     try {
-      const pb = getPocketBase();
-      const token = pb.authStore.token;
-      
-      const response = await fetch('/api/users', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
+      const response = await fetch('/api/users');
       const data = await response.json();
       setUsers(data);
     } catch (error) {
@@ -356,7 +353,8 @@ export default function Calendar({ year }: CalendarProps) {
                         {dayEvents.length > 0 && (
                           <div className="w-full mt-1 space-y-0.5">
                             {dayEvents.map((event) => {
-                              const eventType = eventTypes.find(et => et.id === event.eventTypeId);
+                              // Use eventType from expanded relation or fallback to eventTypes array
+                              const eventType = event.eventType || eventTypes.find(et => et.id === event.eventTypeId);
                               const { startIndex, span } = getEventPosition(event, monthDays);
                               const isFirstDay = dayIndex === startIndex;
                               
