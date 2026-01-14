@@ -78,8 +78,9 @@ export default function EventModal({
         credentials: 'include', // Include cookies for authentication
         body: JSON.stringify({
           title,
-          startDate: startDate.toISOString().split('T')[0],
-          endDate: endDate.toISOString().split('T')[0],
+          // PocketBase Date fields need full ISO datetime strings
+          startDate: startDate.toISOString(),
+          endDate: endDate.toISOString(),
           userId: selectedUserId,
           eventTypeId: selectedEventTypeId,
         }),
