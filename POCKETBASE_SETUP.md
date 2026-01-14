@@ -26,11 +26,17 @@ After logging into the PocketBase admin panel, create the following collections:
 - `colorHexCode` (Text, Required)
 
 **Settings:**
+- **IMPORTANT**: All rules must allow authenticated users to read/write
 - Enable "List rule" for authenticated users: `@request.auth.id != ""`
 - Enable "View rule" for authenticated users: `@request.auth.id != ""`
 - Enable "Create rule" for authenticated users: `@request.auth.id != ""`
 - Enable "Update rule" for authenticated users: `@request.auth.id != ""`
 - Enable "Delete rule" for authenticated users: `@request.auth.id != ""`
+
+**Troubleshooting**: If event types disappear after refresh, check:
+1. The security rules are set correctly (all should allow `@request.auth.id != ""`)
+2. You are logged in (check browser console for auth errors)
+3. The collection name is exactly `eventTypes` (case-sensitive)
 
 ### Collection 2: `events`
 
