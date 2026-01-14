@@ -45,13 +45,23 @@ export default function SettingsPage() {
     setIsSubmitting(true);
 
     try {
+      // Ensure we're authenticated
+      if (!pb.authStore.isValid) {
+        throw new Error('You must be logged in to create event types');
+      }
+      
       const token = pb.authStore.token;
+      if (!token) {
+        throw new Error('Authentication token not found. Please log in again.');
+      }
+      
       const response = await fetch('/api/event-types', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
+        credentials: 'include', // Include cookies in the request
         body: JSON.stringify({
           name: newEventTypeName,
           colorHexCode: newEventTypeColor,

@@ -42,6 +42,20 @@ export async function POST(request: NextRequest) {
     if (cookieHeader) {
       pb.authStore.loadFromCookie(cookieHeader);
     }
+    
+    // Also check Authorization header as fallback
+    const authHeader = request.headers.get('authorization');
+    if (authHeader && !pb.authStore.isValid) {
+      const token = authHeader.replace('Bearer ', '');
+      if (token) {
+        // Try to load the token directly
+        try {
+          pb.authStore.save(token, null);
+        } catch (e) {
+          // If token is invalid, continue to check below
+        }
+      }
+    }
 
     // Check authentication
     if (!pb.authStore.isValid) {
