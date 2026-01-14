@@ -66,11 +66,16 @@ export default function EventModal({
     setIsSubmitting(true);
 
     try {
+      const pb = getPocketBase();
+      const token = pb.authStore.token;
+      
       const response = await fetch('/api/events', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : '',
         },
+        credentials: 'include', // Include cookies for authentication
         body: JSON.stringify({
           title,
           startDate: startDate.toISOString().split('T')[0],
