@@ -75,6 +75,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    console.log('Creating event with data:', { title, startDate, endDate, userId, eventTypeId });
+    console.log('Auth valid:', pb.authStore.isValid, 'User:', pb.authStore.model?.id);
+
     // Create event with expanded relations
     const event = await pb.collection('events').create({
       title,
@@ -89,9 +92,43 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(event, { status: 201 });
   } catch (error: any) {
     console.error('Error creating event:', error);
+    console.error('Error details:', {
+      status: error.status,
+      message: error.message,
+      data: error.data,
+      response: error.response,
+    });
+    
+    // Handle missing collection
+    if (error.status === 404 && error.message?.includes('Missing collection context')) {
+      return NextResponse.json(
+        { error: 'The events collection does not exist yet. Please create it in the PocketBase admin panel first.' },
+        { status: 404 }
+      );
+    }
+    
+    // Handle validation errors (400)
+    if (error.status === 400 && error.data) {
+      const validationErrors = Object.entries(error.data)
+        .map(([field, message]) => `${field}: ${message}`)
+        .join(', ');
+      return NextResponse.json(
+        { error: `Validation error: ${validationErrors}`, details: error.data },
+        { status: 400 }
+      );
+    }
+    
+    // Handle unauthorized (403)
+    if (error.status === 403) {
+      return NextResponse.json(
+        { error: 'You do not have permission to create events. Check PocketBase security rules.' },
+        { status: 403 }
+      );
+    }
+    
     return NextResponse.json(
-      { error: 'Failed to create event', details: error.message },
-      { status: 500 }
+      { error: 'Failed to create event', details: error.message || 'Unknown error', data: error.data },
+      { status: error.status || 500 }
     );
   }
 }

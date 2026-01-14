@@ -81,16 +81,18 @@ export default function EventModal({
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create event');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create event');
       }
 
       setTitle('');
       setSelectedUserId('');
       setSelectedEventTypeId('');
       onEventCreated();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating event:', error);
-      alert('Failed to create event. Please try again.');
+      const errorMessage = error.message || 'Failed to create event. Please try again.';
+      alert(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
