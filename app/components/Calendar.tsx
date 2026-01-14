@@ -14,6 +14,7 @@ const MONTHS = [
 ];
 
 const DAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+const MAX_COLUMNS = 37; // max: month starts on Saturday (6 offset) + 31 days
 
 export default function Calendar({ year }: CalendarProps) {
   const [events, setEvents] = useState<Event[]>([]);
@@ -73,8 +74,6 @@ export default function Calendar({ year }: CalendarProps) {
 
   const getMonthDays = useMemo(() => {
     const monthDaysMap: { [key: number]: { day: number; date: Date; isCurrentMonth: boolean; isEmpty: boolean }[] } = {};
-    // Maximum columns per month: 6 leading days (if month starts on Saturday) + 31 days = 37
-    const MAX_COLUMNS_PER_MONTH = 37;
     
     for (let month = 0; month < 12; month++) {
       const monthDays: { day: number; date: Date; isCurrentMonth: boolean; isEmpty: boolean }[] = [];
@@ -105,7 +104,7 @@ export default function Calendar({ year }: CalendarProps) {
 
       // Add empty cells after the last day of the month to fill remaining columns
       const currentColumns = monthDays.length;
-      const emptyCellsNeeded = MAX_COLUMNS_PER_MONTH - currentColumns;
+      const emptyCellsNeeded = MAX_COLUMNS - currentColumns;
       for (let i = 0; i < emptyCellsNeeded; i++) {
         monthDays.push({
           day: 0,
@@ -121,24 +120,17 @@ export default function Calendar({ year }: CalendarProps) {
     return monthDaysMap;
   }, [year]);
 
-  // Calculate total columns and generate repeating weekly pattern for headers
-  // Each month has a fixed width of 37 columns (MAX_COLUMNS_PER_MONTH)
+  // Weekday headers are capped to the fixed grid width (MAX_COLUMNS)
   const weekdayHeaders = useMemo(() => {
-    const MAX_COLUMNS_PER_MONTH = 37;
-    const totalColumns = MAX_COLUMNS_PER_MONTH * 12; // 12 months * 37 columns each
-    const headers: { dayOfWeek: number; label: string; isSunday: boolean; isSaturday: boolean }[] = [];
-    
-    for (let i = 0; i < totalColumns; i++) {
+    return Array.from({ length: MAX_COLUMNS }, (_, i) => {
       const dayOfWeek = i % 7;
-      headers.push({
+      return {
         dayOfWeek,
         label: DAYS[dayOfWeek],
         isSunday: dayOfWeek === 0,
         isSaturday: dayOfWeek === 6,
-      });
-    }
-    
-    return headers;
+      };
+    });
   }, []);
 
   const getEventsForDate = (date: Date) => {
@@ -225,8 +217,8 @@ export default function Calendar({ year }: CalendarProps) {
   };
 
   return (
-    <div className="w-full">
-      <div className="inline-block min-w-0">
+    <div className="w-full max-w-full overflow-x-auto">
+      <div className="inline-block">
         {/* Year Header */}
         <div className="mb-4">
           <h1 className="text-4xl font-bold mb-2">CALENDAR</h1>
