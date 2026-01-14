@@ -20,6 +20,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(events);
   } catch (error: any) {
     console.error('Error fetching events:', error);
+    
+    // If collection doesn't exist yet, return empty array instead of error
+    if (error.status === 404 && error.message?.includes('Missing collection context')) {
+      return NextResponse.json([]);
+    }
+    
     return NextResponse.json(
       { error: 'Failed to fetch events', details: error.message },
       { status: 500 }

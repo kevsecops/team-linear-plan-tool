@@ -24,9 +24,17 @@ export default function SettingsPage() {
     try {
       const response = await fetch('/api/event-types');
       const data = await response.json();
-      setEventTypes(data);
+      
+      // Ensure data is an array (handle error responses)
+      if (Array.isArray(data)) {
+        setEventTypes(data);
+      } else {
+        console.warn('Event types API returned non-array:', data);
+        setEventTypes([]);
+      }
     } catch (error) {
       console.error('Error fetching event types:', error);
+      setEventTypes([]);
     }
   };
 
