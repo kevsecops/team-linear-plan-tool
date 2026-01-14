@@ -23,10 +23,8 @@ services:
       - "8090:8090"
     volumes:
       - pocketbase_data:/pb_data
-    command:
-      - --encryptionEnv=PB_ENCRYPTION_KEY
     environment:
-      PB_ENCRYPTION_KEY: ${PB_ENCRYPTION_KEY:-changeme-in-production}
+      PB_ENCRYPTION_KEY: ${PB_ENCRYPTION_KEY:-00KXc2wDu28uWboLccLKNiOekYd11D2/+gAtmXH9h70=}
 
   app:
     build:
