@@ -10,11 +10,28 @@ export async function GET(request: NextRequest) {
     if (cookieHeader) {
       pb.authStore.loadFromCookie(cookieHeader);
     }
+    
+    // Also check Authorization header as fallback
+    const authHeader = request.headers.get('authorization');
+    if (authHeader && !pb.authStore.isValid) {
+      const token = authHeader.replace('Bearer ', '');
+      if (token) {
+        try {
+          pb.authStore.save(token, null);
+        } catch (e) {
+          // If token is invalid, continue
+        }
+      }
+    }
+
+    console.log('GET /api/event-types - Auth valid:', pb.authStore.isValid, 'Token:', pb.authStore.token ? 'present' : 'missing');
 
     // Fetch event types sorted by name
     const eventTypes = await pb.collection('eventTypes').getFullList({
       sort: 'name',
     });
+
+    console.log('GET /api/event-types - Fetched', eventTypes.length, 'event types');
 
     // Map PocketBase format to our EventType interface
     const mappedEventTypes = eventTypes.map((et: any) => ({

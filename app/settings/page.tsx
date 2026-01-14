@@ -22,8 +22,12 @@ export default function SettingsPage() {
 
   const fetchEventTypes = async () => {
     try {
-      const response = await fetch('/api/event-types');
+      const response = await fetch('/api/event-types', {
+        credentials: 'include', // Include cookies for authentication
+      });
       const data = await response.json();
+      
+      console.log('Settings: Fetched event types:', data); // Debug log
       
       // Ensure data is an array (handle error responses)
       if (Array.isArray(data)) {

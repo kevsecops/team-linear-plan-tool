@@ -92,8 +92,12 @@ export default function Calendar({ year }: CalendarProps) {
 
   const fetchEventTypes = async () => {
     try {
-      const response = await fetch('/api/event-types');
+      const response = await fetch('/api/event-types', {
+        credentials: 'include', // Include cookies for authentication
+      });
       const data = await response.json();
+      
+      console.log('Fetched event types:', data); // Debug log
       
       // Ensure data is an array and has the expected structure
       if (Array.isArray(data)) {
