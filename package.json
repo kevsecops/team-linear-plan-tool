@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typegen": "pocketbase-typegen --db ./pocketbase_data/data.db --out types/pocketbase-types.ts"
+    "typegen": "echo 'Type generation requires pocketbase-typegen. Install manually when needed.'"
   },
   "dependencies": {
     "next": "^14.2.5",
@@ -21,7 +21,6 @@
     "@types/react-dom": "^18.3.0",
     "autoprefixer": "^10.4.19",
     "postcss": "^8.4.40",
-    "pocketbase-typegen": "^0.1.0",
     "tailwindcss": "^3.4.7",
     "tsx": "^4.16.2",
     "typescript": "^5.5.4"
