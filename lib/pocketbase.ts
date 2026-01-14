@@ -7,7 +7,10 @@ export function getPocketBase(): PocketBase {
   if (typeof window === 'undefined') {
     // Server-side: create a new instance (no authStore persistence needed)
     const url = process.env.NEXT_PUBLIC_POCKETBASE_URL || 'http://localhost:8090';
-    return new PocketBase(url);
+    const pb = new PocketBase(url);
+    // Enable auto cancellation for server-side requests
+    pb.autoCancellation(false);
+    return pb;
   }
 
   // Client-side: use singleton
@@ -15,8 +18,20 @@ export function getPocketBase(): PocketBase {
     const url = process.env.NEXT_PUBLIC_POCKETBASE_URL || 'http://localhost:8090';
     pbInstance = new PocketBase(url);
     
-    // Load authStore from cookies/localStorage if available
-    pbInstance.authStore.loadFromCookie(document.cookie);
+    // Load authStore from cookies if available
+    try {
+      const cookies = document.cookie.split(';');
+      const authCookie = cookies.find(c => c.trim().startsWith('pb_auth='));
+      if (authCookie) {
+        const token = authCookie.split('=')[1];
+        if (token && token !== 'null' && token !== 'undefined') {
+          // Try to load the token - we'll validate it on first request
+          pbInstance.authStore.save(token, null);
+        }
+      }
+    } catch (e) {
+      // Ignore cookie parsing errors
+    }
   }
 
   return pbInstance;
