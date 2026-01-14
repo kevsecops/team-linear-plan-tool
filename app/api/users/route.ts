@@ -5,22 +5,21 @@ export async function GET(request: NextRequest) {
   try {
     const pb = getPocketBase();
     
-    // Get auth token from request headers or cookies
-    const authHeader = request.headers.get('authorization');
+    // Load auth from cookies (critical for server-side authentication)
     const cookieHeader = request.headers.get('cookie');
+    if (cookieHeader) {
+      pb.authStore.loadFromCookie(cookieHeader);
+    }
     
-    if (authHeader) {
+    // Also check Authorization header as fallback
+    const authHeader = request.headers.get('authorization');
+    if (authHeader && !pb.authStore.isValid) {
       const token = authHeader.replace('Bearer ', '');
-      if (token && token !== 'null' && token !== 'undefined') {
-        pb.authStore.save(token, null);
-      }
-    } else if (cookieHeader) {
-      const cookies = cookieHeader.split(';');
-      const authCookie = cookies.find(c => c.trim().startsWith('pb_auth='));
-      if (authCookie) {
-        const token = authCookie.split('=')[1];
-        if (token && token !== 'null' && token !== 'undefined') {
+      if (token) {
+        try {
           pb.authStore.save(token, null);
+        } catch (e) {
+          // If token is invalid, continue
         }
       }
     }

@@ -138,11 +138,15 @@ export default function EventModal({
               required
             >
               <option value="">Select a user</option>
-              {users.map((user) => (
-                <option key={user.id} value={user.id}>
-                  {user.name || user.email}
-                </option>
-              ))}
+              {users && users.length > 0 ? (
+                users.map((user) => (
+                  <option key={user.id} value={user.id}>
+                    {user.name || user.email}
+                  </option>
+                ))
+              ) : (
+                <option value="" disabled>No users available. Please ensure you are logged in.</option>
+              )}
             </select>
           </div>
 

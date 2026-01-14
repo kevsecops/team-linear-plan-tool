@@ -82,11 +82,23 @@ export default function Calendar({ year }: CalendarProps) {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch('/api/users');
+      const response = await fetch('/api/users', {
+        credentials: 'include', // Include cookies for authentication
+      });
       const data = await response.json();
-      setUsers(data);
+      
+      console.log('Fetched users:', data); // Debug log
+      
+      // Ensure data is an array
+      if (Array.isArray(data)) {
+        setUsers(data);
+      } else {
+        console.warn('Users API returned non-array:', data);
+        setUsers([]);
+      }
     } catch (error) {
       console.error('Error fetching users:', error);
+      setUsers([]);
     }
   };
 
