@@ -15,7 +15,13 @@ export function getPocketBase(): PocketBase {
 
   // Client-side: use singleton
   if (!pbInstance) {
-    const url = process.env.NEXT_PUBLIC_POCKETBASE_URL || 'http://localhost:8090';
+    // In browser, always use localhost (not the Docker service name)
+    // The NEXT_PUBLIC_ env var should be set to localhost for client-side
+    let url = process.env.NEXT_PUBLIC_POCKETBASE_URL || 'http://localhost:8090';
+    // If it's the Docker service name, replace with localhost for browser
+    if (url.includes('pocketbase:8090')) {
+      url = url.replace('pocketbase:8090', 'localhost:8090');
+    }
     pbInstance = new PocketBase(url);
     
     // Load authStore from cookies if available

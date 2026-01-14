@@ -35,7 +35,7 @@ services:
       - "3000:3000"
     environment:
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/team_calendar
-      NEXT_PUBLIC_POCKETBASE_URL: http://pocketbase:8090
+      NEXT_PUBLIC_POCKETBASE_URL: http://localhost:8090
       NODE_ENV: development
     depends_on:
       postgres:

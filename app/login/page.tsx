@@ -62,9 +62,21 @@ export default function LoginPage() {
       router.refresh();
     } catch (err: any) {
       console.error('Auth error:', err);
+      console.error('Error details:', {
+        message: err?.message,
+        response: err?.response,
+        data: err?.response?.data,
+        status: err?.status,
+        url: err?.url,
+      });
+      
       // Extract more detailed error message from PocketBase
       let errorMessage = 'Authentication failed';
-      if (err?.response?.data) {
+      
+      // Check for network/CORS errors
+      if (err?.message?.includes('fetch') || err?.message?.includes('network') || err?.message?.includes('CORS')) {
+        errorMessage = 'Cannot connect to PocketBase. Please check if PocketBase is running on http://localhost:8090';
+      } else if (err?.response?.data) {
         const data = err.response.data;
         if (data.message) {
           errorMessage = data.message;
