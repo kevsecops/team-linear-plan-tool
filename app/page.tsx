@@ -14,9 +14,8 @@ export default function Home() {
 
   const handleLogout = () => {
     pb.authStore.clear();
-    const isProduction = process.env.NODE_ENV === 'production';
-    const secureFlag = isProduction ? '; Secure' : '';
-    document.cookie = `pb_auth=; path=/; max-age=0${secureFlag}; SameSite=Lax`;
+    // Clear the cookie by setting it to expire
+    document.cookie = 'pb_auth=; path=/; max-age=0; SameSite=Lax';
     router.push('/login');
   };
 

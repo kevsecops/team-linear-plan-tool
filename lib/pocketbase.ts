@@ -24,19 +24,13 @@ export function getPocketBase(): PocketBase {
     }
     pbInstance = new PocketBase(url);
     
-    // Load authStore from cookies if available
+    // Load authStore from cookies if available (using PocketBase's proper format)
     try {
-      const cookies = document.cookie.split(';');
-      const authCookie = cookies.find(c => c.trim().startsWith('pb_auth='));
-      if (authCookie) {
-        const token = authCookie.split('=')[1];
-        if (token && token !== 'null' && token !== 'undefined') {
-          // Try to load the token - we'll validate it on first request
-          pbInstance.authStore.save(token, null);
-        }
-      }
+      // PocketBase expects the full cookie string, not just the token
+      pbInstance.authStore.loadFromCookie(document.cookie);
     } catch (e) {
-      // Ignore cookie parsing errors
+      // Ignore cookie parsing errors - user will need to log in
+      console.warn('Failed to load auth from cookie:', e);
     }
   }
 

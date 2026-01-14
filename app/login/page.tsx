@@ -50,10 +50,19 @@ export default function LoginPage() {
         throw new Error('Authentication token not received');
       }
 
-      // Save auth token to cookie
+      // Save auth to cookie using PocketBase's proper cookie format
       const isProduction = process.env.NODE_ENV === 'production';
-      const secureFlag = isProduction ? '; Secure' : '';
-      document.cookie = `pb_auth=${pb.authStore.token}; path=/; max-age=604800${secureFlag}; SameSite=Lax`; // 7 days
+      const cookieOptions = {
+        httpOnly: false, // Must be false for client-side access
+        secure: isProduction,
+        sameSite: 'Lax' as const,
+        path: '/',
+        maxAge: 604800, // 7 days
+      };
+      
+      // Use PocketBase's exportToCookie method for proper format
+      const cookieString = pb.authStore.exportToCookie(cookieOptions);
+      document.cookie = cookieString;
 
       // Small delay to ensure cookie is set
       await new Promise(resolve => setTimeout(resolve, 100));

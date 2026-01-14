@@ -15,14 +15,11 @@ export default function AuthGate({ children }: AuthGateProps) {
   useEffect(() => {
     const pb = getPocketBase();
     
-    // Load auth from cookie
-    const cookies = document.cookie.split(';');
-    const authCookie = cookies.find(c => c.trim().startsWith('pb_auth='));
-    if (authCookie) {
-      const token = authCookie.split('=')[1];
-      if (token && token !== 'null' && token !== 'undefined') {
-        pb.authStore.save(token, null);
-      }
+    // Load auth from cookie using PocketBase's proper format
+    try {
+      pb.authStore.loadFromCookie(document.cookie);
+    } catch (e) {
+      console.warn('Failed to load auth from cookie in AuthGate:', e);
     }
 
     // Check if authenticated

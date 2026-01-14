@@ -45,9 +45,21 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(mappedEventTypes);
   } catch (error: any) {
     console.error('Error fetching event types:', error);
+    console.error('Error details:', {
+      status: error.status,
+      message: error.message,
+      response: error.response,
+      url: error.url,
+    });
     
     // If collection doesn't exist yet, return empty array instead of error
     if (error.status === 404 && error.message?.includes('Missing collection context')) {
+      return NextResponse.json([]);
+    }
+    
+    // If unauthorized (403) or forbidden, likely security rules blocking
+    if (error.status === 403 || error.status === 401) {
+      console.warn('Access denied to event types - check PocketBase security rules');
       return NextResponse.json([]);
     }
     
