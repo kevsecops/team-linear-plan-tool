@@ -16,7 +16,16 @@ export async function GET(request: NextRequest) {
       sort: 'name',
     });
 
-    return NextResponse.json(eventTypes);
+    // Map PocketBase format to our EventType interface
+    const mappedEventTypes = eventTypes.map((et: any) => ({
+      id: et.id,
+      name: et.name,
+      colorHexCode: et.colorHexCode,
+      created: et.created,
+      updated: et.updated,
+    }));
+
+    return NextResponse.json(mappedEventTypes);
   } catch (error: any) {
     console.error('Error fetching event types:', error);
     

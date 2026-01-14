@@ -94,9 +94,17 @@ export default function Calendar({ year }: CalendarProps) {
     try {
       const response = await fetch('/api/event-types');
       const data = await response.json();
-      setEventTypes(data);
+      
+      // Ensure data is an array and has the expected structure
+      if (Array.isArray(data)) {
+        setEventTypes(data);
+      } else {
+        console.warn('Event types API returned non-array:', data);
+        setEventTypes([]);
+      }
     } catch (error) {
       console.error('Error fetching event types:', error);
+      setEventTypes([]);
     }
   };
 

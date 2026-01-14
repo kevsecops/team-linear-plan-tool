@@ -157,11 +157,15 @@ export default function EventModal({
               required
             >
               <option value="">Select an event type</option>
-              {eventTypes.map((eventType) => (
-                <option key={eventType.id} value={eventType.id}>
-                  {eventType.name}
-                </option>
-              ))}
+              {eventTypes && eventTypes.length > 0 ? (
+                eventTypes.map((eventType) => (
+                  <option key={eventType.id} value={eventType.id}>
+                    {eventType.name}
+                  </option>
+                ))
+              ) : (
+                <option value="" disabled>No event types available. Create one in Settings first.</option>
+              )}
             </select>
           </div>
 
