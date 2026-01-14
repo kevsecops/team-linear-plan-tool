@@ -1,5 +1,7 @@
 # PocketBase Setup Guide
 
+**IMPORTANT**: You must create the PocketBase collections before using the application. The app will show errors until these collections exist.
+
 ## Step 1: Initialize PocketBase Admin Account
 
 1. Open http://localhost:8090/_/ in your browser

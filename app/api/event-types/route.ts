@@ -84,6 +84,14 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error('Error creating event type:', error);
     
+    // Handle missing collection
+    if (error.status === 404 && error.message?.includes('Missing collection context')) {
+      return NextResponse.json(
+        { error: 'The eventTypes collection does not exist yet. Please create it in the PocketBase admin panel first.' },
+        { status: 404 }
+      );
+    }
+    
     // Handle unique constraint errors (PocketBase equivalent of Prisma P2002)
     if (error.status === 400 && error.data?.name) {
       return NextResponse.json(
@@ -92,9 +100,20 @@ export async function POST(request: NextRequest) {
       );
     }
     
+    // Handle validation errors
+    if (error.status === 400 && error.data) {
+      const validationErrors = Object.entries(error.data)
+        .map(([field, message]) => `${field}: ${message}`)
+        .join(', ');
+      return NextResponse.json(
+        { error: `Validation error: ${validationErrors}` },
+        { status: 400 }
+      );
+    }
+    
     return NextResponse.json(
-      { error: 'Failed to create event type', details: error.message },
-      { status: 500 }
+      { error: 'Failed to create event type', details: error.message || 'Unknown error' },
+      { status: error.status || 500 }
     );
   }
 }
