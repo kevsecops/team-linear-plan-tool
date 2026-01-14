@@ -78,11 +78,18 @@ export async function POST(request: NextRequest) {
     console.log('Creating event with data:', { title, startDate, endDate, userId, eventTypeId });
     console.log('Auth valid:', pb.authStore.isValid, 'User:', pb.authStore.model?.id);
 
+    // Convert dates to date-only format if they're full ISO strings
+    // PocketBase "Date (Date only)" fields need YYYY-MM-DD format
+    const startDateOnly = startDate.includes('T') ? startDate.split('T')[0] : startDate;
+    const endDateOnly = endDate.includes('T') ? endDate.split('T')[0] : endDate;
+
+    console.log('Converted dates:', { startDateOnly, endDateOnly });
+
     // Create event with expanded relations
     const event = await pb.collection('events').create({
       title,
-      startDate,
-      endDate,
+      startDate: startDateOnly,
+      endDate: endDateOnly,
       userId,
       eventTypeId,
     }, {
@@ -108,12 +115,28 @@ export async function POST(request: NextRequest) {
     }
     
     // Handle validation errors (400)
-    if (error.status === 400 && error.data) {
-      const validationErrors = Object.entries(error.data)
-        .map(([field, message]) => `${field}: ${message}`)
+    if (error.status === 400) {
+      // PocketBase validation errors can be nested in error.data.data or error.data
+      const validationData = error.data?.data || error.data || {};
+      const validationErrors = Object.entries(validationData)
+        .map(([field, message]: [string, any]) => {
+          // Handle nested objects (e.g., { code: 'validation_required', message: '...' })
+          if (typeof message === 'object' && message !== null) {
+            return `${field}: ${message.message || JSON.stringify(message)}`;
+          }
+          return `${field}: ${message}`;
+        })
         .join(', ');
+      
+      console.error('Validation errors:', validationErrors);
+      console.error('Full error.data:', JSON.stringify(error.data, null, 2));
+      
       return NextResponse.json(
-        { error: `Validation error: ${validationErrors}`, details: error.data },
+        { 
+          error: validationErrors || 'Validation error occurred',
+          details: validationData,
+          fullError: error.data 
+        },
         { status: 400 }
       );
     }
